@@ -1,9 +1,6 @@
 import time
 import keyboard
 
-
-
-
 temporizador1 = 0;
 finish = "";
 
