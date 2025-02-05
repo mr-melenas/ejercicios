@@ -28,7 +28,7 @@ def conducir():
             if numero in tiempos_inicio:
                 tiempo_presionado = time.time() - tiempos_inicio[numero]
                 tiempo_total += tiempo_presionado  # Acumula el tiempo total
-                print(f"\nNúmero {numero} presionado por {tiempo_presionado:.2f} segundos")
+                #print(f"\nNúmero {numero} presionado por {tiempo_presionado:.2f} segundos")
                 del tiempos_inicio[numero]  # Eliminar registro del tiempo de inicio
         
         if keyboard.is_pressed("Esc"):
