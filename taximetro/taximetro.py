@@ -1,11 +1,24 @@
 import time
 import keyboard
+from pymongo import MongoClient
+from datetime import datetime
 
+# Conectar a MongoDB
+def conectarBD():
+    MONGO_URI = "mongodb+srv://mbeltranestudio:tAucnxsq2Qc822DS@clusteradan.amk0r.mongodb.net/"
 
+    # Conectar a la base de datos
+    client = MongoClient(MONGO_URI)
 
-
-temporizador1 = 0;
-finish = "";
+    # Seleccionar la base de datos
+    db = client["Taximetro"]  # Cambia "taximetro_db" por el nombre que quieras
+    recorridos = db["recorridos"]
+    # Verificar conexión
+    try:
+        print("Conectado a MongoDB correctamente ✅")
+        print("Bases de datos disponibles:", client.list_database_names())  # Lista bases de datos
+    except Exception as e:
+        print("Error al conectar con MongoDB ❌", e)
 
 #Funcion para conducir   
 def conducir():
@@ -28,13 +41,29 @@ def conducir():
             if numero in tiempos_inicio:
                 tiempo_presionado = time.time() - tiempos_inicio[numero]
                 tiempo_total += tiempo_presionado  # Acumula el tiempo total
-                print(f"\nNúmero {numero} presionado por {tiempo_presionado:.2f} segundos")
+                #print(f"\nNúmero {numero} presionado por {tiempo_presionado:.2f} segundos")
                 del tiempos_inicio[numero]  # Eliminar registro del tiempo de inicio
         
         if keyboard.is_pressed("Esc"):
             #print(f"\nTiempo total presionando números: {tiempo_total:.2f} segundos")
             print("Saliendo...")
             return tiempo_total
+
+def guardar_recorrido(conductor, tiempo_total, tiempo_parado, tiempo_movimiento, total_pagar):
+    recorridos = db["recorridos"]
+    fecha_registro = datetime.now() 
+    
+    recorrido = {
+        "conductor": conductor,
+        "tiempo_total": tiempo_total,
+        "tiempo_parado": tiempo_parado,
+        "tiempo_movimiento": tiempo_movimiento,
+        "total_pagar": total_pagar,
+        "fecha_registro": fecha_registro
+    }
+    recorridos.insert_one(nuevo_recorrido)
+    db.recorridos.insert_one(recorrido)  # Guardar en la base de datos
+    print("Recorrido guardado correctamente.")
 
 
 def cobrar(tiempo_Taximetro, tiempo_conduccion):
@@ -44,7 +73,7 @@ def cobrar(tiempo_Taximetro, tiempo_conduccion):
     #print(f"el total en movimiento es: { tiempo_conduccion * 0.05 }")  
     total_a_apagar = (tiempo_Taximetro-tiempo_conduccion) * 0.02 + tiempo_conduccion * 0.05
     print(f"el total a pagar es: {total_a_apagar:.2f}€ ") 
-
+    return total_a_apagar
 taxi_ascii = r"""
       __________
      |   TAXI   | 
@@ -52,15 +81,24 @@ taxi_ascii = r"""
  |  _          _   `|
 '--(o)--------(o)--'
 """
+temporizador1 = 0;
+finish = "";
 
+conductor=""
+tiempo_parado=0.0
+tiempo_movimiento=0
+tiempo_total=0
+total_pagar=""
+fecha_registro=""
 
+conectarBD()
 print("Bienvenido al taximetro")
 print(taxi_ascii)
 print("Instrucciones:")
 print("-Presiones 'S' si desea inciar el taximetro o 'N' para finalizar.")
 print("-Conduzca con las teclas numericas del 0 al 9 y precione 'ESC' para finalizar")
 print("-Se mostrara el total a cobrar y luego podras elegir si hacer otro trayecto")
-
+print("----------------------------")
 while True:
     options= input("Desea iniciar el taximetro? S/N: ")
     if options in ["N", "n"]:
@@ -70,24 +108,19 @@ while True:
     elif options in ["S", "s"]:
         print("Iniciando taximetro")
         temporizador1 = time.time()
-        tiempo_conduccion = conducir()
+        tiempo_movimiento = conducir()
         temporizador2 = time.time()
-        tiempo_Taximetro = temporizador2 - temporizador1
+        tiempo_total = temporizador2 - temporizador1
         print("Taximetro finalizado")
-        cobrar(tiempo_Taximetro, tiempo_conduccion)
+        total_pagar= cobrar(tiempo_total, tiempo_movimiento)
+
+        guardar_recorrido("JAIME",tiempo_total,(tiempo_total-tiempo_movimiento), tiempo_movimiento, total_pagar)
+
         time.sleep(2)
         #finish= input("Presione 'Q' para finalizar el taximetro?: ")
 
     else:
         print("Por favor, elija entre S o N")
 
-
-
-
-
-
-
-
-    
 
  
