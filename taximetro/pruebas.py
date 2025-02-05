@@ -1,32 +1,30 @@
-import keyboard
 import time
 
-print("Presiona y mantén cualquier número (0-9). Suelta para ver el tiempo individual.")
-print("Presiona 'Esc' para ver el tiempo total y salir.")
+def conducir():
+    print("Conduciendo...")
+    time.sleep(2)  # Simula el tiempo de conducción
+    return time.time() - temporizador1
 
-# Diccionario para almacenar tiempos de inicio
-tiempos_inicio = {}
-# Variable para almacenar el tiempo total
-tiempo_total = 0.0
+def cobrar(tiempo_taximetro, tiempo_conduccion):
+    print(f"Tiempo total del taxímetro: {tiempo_taximetro:.2f} segundos")
+    print(f"Tiempo de conducción: {tiempo_conduccion:.2f} segundos")
+    print("Cobro realizado.")
+
+print("Bienvenido al taxímetro")
 
 while True:
-    evento = keyboard.read_event()
-
-    if evento.event_type == "down" and evento.name.isdigit():  # Detectar números 0-9
-        numero = evento.name
-        if numero not in tiempos_inicio:  # Evita registrar varias veces si la tecla sigue presionada
-            tiempos_inicio[numero] = time.time()
-
-    elif evento.event_type == "up" and evento.name.isdigit():
-        numero = evento.name
-        if numero in tiempos_inicio:
-            tiempo_presionado = time.time() - tiempos_inicio[numero]
-            tiempo_total += tiempo_presionado  # Acumula el tiempo total
-            print(f"\nNúmero {numero} presionado por {tiempo_presionado:.2f} segundos")
-            del tiempos_inicio[numero]  # Eliminar registro del tiempo de inicio
-
-    # Salir con ESC y mostrar el tiempo total
-    if keyboard.is_pressed("esc"):
-        print(f"\nTiempo total presionando números: {tiempo_total:.2f} segundos")
-        print("Saliendo...")
+    options = input("Desea iniciar el taxímetro? S/N: ")
+    if options in ["N", "n"]:
+        print("El taxímetro no se ha iniciado")
+        print("Bye Bye")
         break
+    elif options in ["S", "s"]:
+        print("Iniciando taxímetro")
+        temporizador1 = time.time()
+        tiempo_conduccion = conducir()
+        temporizador2 = time.time()
+        tiempo_taximetro = temporizador2 - temporizador1
+        print("Taxímetro finalizado")
+        cobrar(tiempo_taximetro, tiempo_conduccion)
+    else:
+        print("Por favor, elija entre S o N")
