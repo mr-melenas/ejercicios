@@ -3,6 +3,7 @@ import keyboard
 from pymongo import MongoClient
 from datetime import datetime
 
+
 # Conectar a MongoDB
 def conectarBD():
     MONGO_URI = "mongodb+srv://mbeltranestudio:tAucnxsq2Qc822DS@clusteradan.amk0r.mongodb.net/"
@@ -11,14 +12,16 @@ def conectarBD():
     client = MongoClient(MONGO_URI)
 
     # Seleccionar la base de datos
-    db = client["Taximetro"]  # Cambia "taximetro_db" por el nombre que quieras
+    db = client["Taximetro"]  # selecciono la BD 
     recorridos = db["recorridos"]
     # Verificar conexión
-    try:
-        print("Conectado a MongoDB correctamente ✅")
-        print("Bases de datos disponibles:", client.list_database_names())  # Lista bases de datos
-    except Exception as e:
-        print("Error al conectar con MongoDB ❌", e)
+    # try:
+    #     print("Conectado a MongoDB correctamente ✅")
+    #     print("Bases de datos disponibles:", client.list_database_names())  # Lista bases de datos
+    # except Exception as e:
+    #     print("Error al conectar con MongoDB ❌", e)
+
+    return db 
 
 #Funcion para conducir   
 def conducir():
@@ -49,8 +52,8 @@ def conducir():
             print("Saliendo...")
             return tiempo_total
 
-def guardar_recorrido(conductor, tiempo_total, tiempo_parado, tiempo_movimiento, total_pagar):
-    recorridos = db["recorridos"]
+def guardar_recorrido(db, conductor, tiempo_total, tiempo_parado, tiempo_movimiento, total_pagar):
+    recorridos = db["recorridos"]  # Definir la colección
     fecha_registro = datetime.now() 
     
     recorrido = {
@@ -61,8 +64,7 @@ def guardar_recorrido(conductor, tiempo_total, tiempo_parado, tiempo_movimiento,
         "total_pagar": total_pagar,
         "fecha_registro": fecha_registro
     }
-    recorridos.insert_one(nuevo_recorrido)
-    db.recorridos.insert_one(recorrido)  # Guardar en la base de datos
+    recorridos.insert_one(recorrido)
     print("Recorrido guardado correctamente.")
 
 
@@ -91,7 +93,7 @@ tiempo_total=0
 total_pagar=""
 fecha_registro=""
 
-conectarBD()
+db = conectarBD()
 print("Bienvenido al taximetro")
 print(taxi_ascii)
 print("Instrucciones:")
@@ -114,7 +116,7 @@ while True:
         print("Taximetro finalizado")
         total_pagar= cobrar(tiempo_total, tiempo_movimiento)
 
-        guardar_recorrido("JAIME",tiempo_total,(tiempo_total-tiempo_movimiento), tiempo_movimiento, total_pagar)
+        guardar_recorrido(db,"JAIME",tiempo_total,(tiempo_total-tiempo_movimiento), tiempo_movimiento, total_pagar)
 
         time.sleep(2)
         #finish= input("Presione 'Q' para finalizar el taximetro?: ")
