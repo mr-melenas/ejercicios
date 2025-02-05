@@ -1,17 +1,16 @@
-from pymongo import MongoClient
+from flask import Flask
+from flask_pymongo import PyMongo
 
-# Cadena de conexión a MongoDB Atlas
-MONGO_URI = "mongodb+srv://mbeltranestudio:tAucnxsq2Qc822DS@clusteradan.amk0r.mongodb.net/"
+app = Flask(__name__)
 
-# Conectar a la base de datos
-client = MongoClient(MONGO_URI)
+# Configurar la conexión con MongoDB
+app.config["MONGO_URI"] = "mongodb+srv://mbeltranestudio:tAucnxsq2Qc822DS@clusteradan.amk0r.mongodb.net/"
 
-# Seleccionar la base de datos
-db = client["Taximetro"]  # Cambia "taximetro_db" por el nombre que quieras
+mongo = PyMongo(app) # Conectar a la base de datos
 
-# Verificar conexión
-try:
-    print("Conectado a MongoDB correctamente ✅")
-    print("Bases de datos disponibles:", client.list_database_names())  # Lista bases de datos
-except Exception as e:
-    print("Error al conectar con MongoDB ❌", e)
+@app.route('/')
+def index():
+    return "Bienvenido al Taxímetro"
+
+if __name__ == '__main__':
+    app.run(debug=True)
