@@ -8,9 +8,67 @@ app.secret_key = 'secreto_super_seguro'  # Clave para manejar sesiones
 
 
 # Conectar a MongoDB Atlas
-app.config["MONGO_URI"] = "mongodb+srv://mbeltranestudio:tAucnxsq2Qc822DS@clusteradan.amk0r.mongodb.net/"
+app.config["MONGO_URI"] = "mongodb+srv://mbeltranestudio:tAucnxsq2Qc822DS@clusteradan.amk0r.mongodb.net/Taximetro"
 mongo = PyMongo(app)
 bcrypt = Bcrypt(app)
+
+
+#----------------------------------------------------------------------------------------------------------------------------
+# prueba test BD
+#----------------------------------------------------------------------------------------------------------------------------
+@app.route('/test-connection')
+def test_connection():
+    try:
+        # Intentar acceder a la colección 'conductores'
+        mongo.db.conductores.find_one()
+        return "✅ Conexión a MongoDB exitosa."
+    except Exception as e:
+        return f"❌ Error de conexión: {str(e)}"
+
+
+#----------------------------------------------------------------------------------------------------------------------------
+# Página de registro
+#----------------------------------------------------------------------------------------------------------------------------
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+
+        username = request.form['username'].strip()
+        password = bcrypt.generate_password_hash(request.form['password']).decode('utf-8')
+        nombre = request.form['nombre'].strip()
+        apellido = request.form['apellido'].strip()
+        email = request.form['email'].strip()
+        telefono = request.form.get('telefono', '').strip()  # Opcional
+        matricula = request.form.get('matricula', '').strip()  # Opcional
+
+        # Verificar si el usuario ya existe
+        if mongo.db.conductores.find_one({'username': username}):
+            flash('El usuario ya existe. Intenta con otro.', 'danger')
+            return redirect(url_for('register'))
+        
+        # Verificar si el email ya existe
+        if mongo.db.conductores.find_one({'email': email}):
+                flash('El correo electrónico ya está registrado.', 'danger')
+                return redirect(url_for('register'))
+        
+        nuevo_usuario = {
+            'username': username,
+            'password': password,
+            'nombre': nombre,
+            'apellido': apellido,
+            'email': email,
+            'telefono': telefono if telefono else None,
+            'matricula': matricula if matricula else None
+        }
+
+        # Insertar el nuevo usuario en la colección 'conductores'
+        mongo.db.conductores.insert_one(nuevo_usuario)
+        flash('¡Registro exitoso! Ahora inicia sesión.', 'success')
+        return redirect(url_for('login'))
+
+    return render_template('register.html')
+
+
 
 #----------------------------------------------------------------------------------------------------------------------------
 # Página de login
@@ -76,6 +134,10 @@ def guardar_recorrido():
     mongo.db.recorridos.insert_one(nuevo_recorrido)
     flash('¡Recorrido guardado con éxito!', 'success')
     return redirect(url_for('mostrar_recorridos'))
+
+# Mostrar todas las rutas registradas por Flask
+for rule in app.url_map.iter_rules():
+    print(rule)
 
 if __name__ == '__main__':
     app.run(debug=True)
