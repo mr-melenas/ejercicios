@@ -79,7 +79,7 @@ def login():
         username = request.form['username']
         password = request.form['password']
 
-        usuario = mongo.db.usuarios.find_one({'username': username})
+        usuario = mongo.db.conductores.find_one({'username': username})
 
         if usuario and bcrypt.check_password_hash(usuario['password'], password):
             session['usuario'] = username
@@ -87,6 +87,7 @@ def login():
             return redirect(url_for('index'))
         else:
             flash('Usuario o contraseña incorrectos.', 'danger')
+            return redirect(url_for('login'))  # Redirige para que el mensaje se muestre
 
     return render_template('login.html')
 
