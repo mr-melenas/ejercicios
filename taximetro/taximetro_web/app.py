@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for ,session, flash
+from flask import Flask, render_template, request, redirect, url_for ,session, flash, jsonify
 from flask_pymongo import PyMongo
 from flask_bcrypt import Bcrypt
 from datetime import datetime
@@ -71,7 +71,7 @@ def register():
 
 
 #----------------------------------------------------------------------------------------------------------------------------
-# Página de login
+# Página de login y logout
 #----------------------------------------------------------------------------------------------------------------------------
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -109,13 +109,35 @@ def index():
         return redirect(url_for('login'))
     return render_template('index.html', usuario=session['usuario'])
 
-# Ruta para ver los recorridos
-@app.route('/recorridos')
-def mostrar_recorridos():
-    if 'usuario' not in session:
-        return redirect(url_for('login'))
-    recorridos = mongo.db.recorridos.find({'conductor': session['usuario']})
-    return render_template('recorridos.html', recorridos=recorridos)
+@app.route('/iniciar_taximetro', methods=['POST'])
+def iniciar_taximetro():
+    print("entro en iniciar_taximetro")
+    # Puedes registrar la hora de inicio si es necesario
+    session['start_time'] = datetime.now()
+    return jsonify({"status": "Taxímetro iniciado"})
+
+@app.route('/finalizar_taximetro', methods=['POST'])
+def finalizar_taximetro():
+    print("entro en iniciar_taximetro")
+    data = request.get_json()
+    precio_parado= 0.02
+    precio_movimiento= 0.05
+    tiempo_total = data['tiempo_total']
+    tiempo_movimiento = data['tiempo_movimiento']
+    tiempo_parado = tiempo_total - tiempo_movimiento
+    total_pagar = tiempo_parado * precio_parado + tiempo_movimiento * precio_movimiento
+
+    # Guardar en MongoDB
+    mongo.db.recorridos.insert_one({
+        "conductor": session.get('usuario'),
+        "tiempo_total": tiempo_total,
+        "tiempo_parado": tiempo_parado,
+        "tiempo_movimiento": tiempo_movimiento,
+        "total_pagar": total_pagar,
+        "fecha_registro": datetime.now()
+    })
+
+    return jsonify({"total_pagar": total_pagar})
 
 # Ruta para guardar un recorrido
 @app.route('/guardar_recorrido', methods=['POST'])
@@ -135,6 +157,31 @@ def guardar_recorrido():
     mongo.db.recorridos.insert_one(nuevo_recorrido)
     flash('¡Recorrido guardado con éxito!', 'success')
     return redirect(url_for('mostrar_recorridos'))
+
+
+#----------------------------------------------------------------------------------------------------------------------------
+# Página recorridos
+#----------------------------------------------------------------------------------------------------------------------------
+# Ruta para ver los recorridos
+@app.route('/recorridos')
+def mostrar_recorridos():
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+    recorridos = mongo.db.recorridos.find({'conductor': session['usuario']})
+    return render_template('recorridos.html', recorridos=recorridos)
+
+
+
+#----------------------------------------------------------------------------------------------------------------------------
+# Página tarifas
+#----------------------------------------------------------------------------------------------------------------------------
+@app.route('/tarifas')
+def tarifas():
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+    return render_template('tarifas.html')
+
+
 
 # Mostrar todas las rutas registradas por Flask
 for rule in app.url_map.iter_rules():
