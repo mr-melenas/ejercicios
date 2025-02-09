@@ -162,6 +162,8 @@
     
             <div class="info-container" id="info">
                 <p><strong>Conductor:</strong> <span id="conductor">{{ usuario }}</span></p>
+                <p><strong>Tiempo Parado:</strong> <span id="tiempo_parado">00:00:00</span></p>
+                <p><strong>Tiempo Movimiento:</strong> <span id="tiempo_movimiento">00:00:00</span></p>
                 <p><strong>Tiempo Total:</strong> <span id="tiempo_total">00:00:00</span></p>
                 <p><strong>Total a Pagar:</strong> <span id="total_pagar">0.00€</span></p>
             </div>
@@ -176,6 +178,7 @@
     <script>
         let startTime, interval;
         let movimientoTime = 0;
+        let tiemposInicio = {};  // Almacena el tiempo de inicio por cada tecla
         let totalTime = 0;
         let car = document.getElementById('car');
 
@@ -189,15 +192,13 @@
 
         function finalizarTaximetro() {
             clearInterval(interval);
-            totalTime = (Date.now() - startTime) / 1000;
+            const totalTime = (Date.now() - startTime) / 1000;
             document.removeEventListener('keydown', girarCoche);
             document.removeEventListener('keyup', resetearCoche);
 
             fetch('/finalizar_taximetro', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     tiempo_total: totalTime,
                     tiempo_movimiento: movimientoTime
@@ -206,6 +207,8 @@
             .then(response => response.json())
             .then(data => {
                 document.getElementById('conductor').textContent = data.conductor;
+                document.getElementById('tiempo_parado').textContent = formatTime(totalTime - movimientoTime);
+                document.getElementById('tiempo_movimiento').textContent = formatTime(movimientoTime);
                 document.getElementById('tiempo_total').textContent = formatTime(totalTime);
                 document.getElementById('total_pagar').textContent = `${data.total_pagar.toFixed(2)}€`;
             });
@@ -214,7 +217,6 @@
         function updateTimer() {
             let elapsedTime = Math.floor((Date.now() - startTime) / 1000);
             document.getElementById('timer').textContent = formatTime(elapsedTime);
-            
         }
 
         function formatTime(seconds) {
@@ -227,11 +229,15 @@
         function girarCoche(event) {
             const key = event.key;
             if (key >= '0' && key <= '9') {
-                movimientoTime += 1; // Incrementa el tiempo de movimiento
+                if (!tiemposInicio[key]) {
+                    tiemposInicio[key] = Date.now();  // Registro del tiempo de inicio
+                }
                 if (key === '7') {
                     car.style.transform = 'rotate(-45deg)';
+                } else if (key === '8') {
+                    car.style.transform = 'rotate(0deg)';
                 } else if (key === '9') {
-                    car.style.transform = 'rotate(45deg)';
+                    car.style.transform = 'rotate(45deg)';      
                 } else {
                     car.style.transform = 'rotate(0deg)';
                 }
@@ -239,8 +245,15 @@
         }
 
         function resetearCoche(event) {
-            if (event.key >= '0' && event.key <= '9') {
-                car.style.transform = 'rotate(0deg)';
+            const key = event.key;
+            console.log(`entra`);
+            if (key >= '0' && key <= '9' && tiemposInicio[key]) {
+                console.log(`entra2`);
+                const tiempoPresionado = (Date.now() - tiemposInicio[key]) / 1000;  // Tiempo presionado en segundos
+                movimientoTime += tiempoPresionado;  // Acumula el tiempo de movimiento
+                console.log(`Tecla ${key} presionada durante ${tiempoPresionado} segundos`);
+                delete tiemposInicio[key];  // Elimina el registro para esa tecla
+                car.style.transform = 'rotate(0deg)';  // Regresa el coche a su posición original
             }
         }
     </script>

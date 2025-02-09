@@ -111,22 +111,25 @@ def index():
 
 @app.route('/iniciar_taximetro', methods=['POST'])
 def iniciar_taximetro():
-    print("entro en iniciar_taximetro")
+    #print("entro en iniciar_taximetro")
     # Puedes registrar la hora de inicio si es necesario
     session['start_time'] = datetime.now()
     return jsonify({"status": "Taxímetro iniciado"})
 
 @app.route('/finalizar_taximetro', methods=['POST'])
 def finalizar_taximetro():
-    print("entro en iniciar_taximetro")
+    #print("entro en iniciar_taximetro")
     data = request.get_json()
     precio_parado= 0.02
     precio_movimiento= 0.05
     tiempo_total = data['tiempo_total']
     tiempo_movimiento = data['tiempo_movimiento']
-    tiempo_parado = tiempo_total - tiempo_movimiento
+    tiempo_parado = max(0, tiempo_total - tiempo_movimiento)  # Evitar valores negativos
     total_pagar = tiempo_parado * precio_parado + tiempo_movimiento * precio_movimiento
-
+    print(f"tiempo_parado {tiempo_parado}")
+    print(f"tiempo_movimiento {tiempo_movimiento}")
+    print(f"tiempo_total {tiempo_total} ")
+    print(f"total_pagar {total_pagar:.2f}€")
     # Guardar en MongoDB
     mongo.db.recorridos.insert_one({
         "conductor": session.get('usuario'),
@@ -137,7 +140,13 @@ def finalizar_taximetro():
         "fecha_registro": datetime.now()
     })
 
-    return jsonify({"total_pagar": total_pagar})
+    return jsonify({
+        "conductor": session.get('usuario'),
+        "tiempo_total": tiempo_total,
+        "tiempo_movimiento": tiempo_movimiento,
+        "tiempo_parado": tiempo_parado,
+        "total_pagar": total_pagar
+    })
 
 # Ruta para guardar un recorrido
 @app.route('/guardar_recorrido', methods=['POST'])
