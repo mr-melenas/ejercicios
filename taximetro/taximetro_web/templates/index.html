@@ -72,6 +72,30 @@
             flex-direction: column;
         }
 
+        /* ---  timer --- */
+        #timer {
+            font-size: 48px;
+            font-weight: bold;
+            color: #4a90e2;
+            background-color: #fff;
+            padding: 20px 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            display: inline-block;
+            transition: transform 0.3s ease, background-color 0.3s ease;
+        }
+
+        #timer.running {
+            animation: pulse 1s infinite;
+            background-color: #e6f7ff;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
         .container {
             display: flex;
             justify-content: center;
@@ -96,6 +120,7 @@
             border-radius: 10px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             text-align: left;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
 
         .info-container p {
@@ -103,10 +128,25 @@
             font-size: 16px;
         }
 
+        .info-container:hover {
+            transform: scale(1.02);
+        }
+
+        .info-container.highlight {
+            animation: highlightEffect 1s ease;
+        }
+
+        @keyframes highlightEffect {
+            0% { box-shadow: 0 0 20px rgba(0, 255, 0, 0.8); }
+            50% { box-shadow: 0 0 40px rgba(0, 255, 0, 1); }
+            100% { box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); }
+        }
+
         /* --- Botones del taxímetro --- */
         .buttons {
             margin-top: 20px;
             display: flex;
+            justify-content: center;
             gap: 15px;
         }
 
@@ -118,10 +158,21 @@
             border-radius: 5px;
             cursor: pointer;
             transition: background 0.3s;
+            font-size: 18px;
         }
 
         .btn:hover {
             background-color: #357ab8;
+        }
+
+        .btn:hover:not([disabled]) {
+            background-color: #357ab8;
+            transform: translateY(-3px);
+        }
+
+        .btn:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
         }
 
         #timer {
@@ -160,7 +211,7 @@
                 <img src="static/car.png" alt="Coche" id="car">
             </div>
     
-            <div class="info-container" id="info">
+            <div class="info-container"  id="infoContainer">
                 <p><strong>Conductor:</strong> <span id="conductor">{{ usuario }}</span></p>
                 <p><strong>Tiempo Parado:</strong> <span id="tiempo_parado">00:00:00</span></p>
                 <p><strong>Tiempo Movimiento:</strong> <span id="tiempo_movimiento">00:00:00</span></p>
@@ -170,8 +221,8 @@
         </div>
 
         <div class="buttons">
-            <button class="btn" onclick="iniciarTaximetro()">Iniciar Taxímetro ▶</button>
-            <button class="btn" onclick="finalizarTaximetro()">Finalizar Taxímetro ■</button>
+            <button class="btn" id="startBtn" onclick="iniciarTaximetro()">Iniciar Taxímetro ▶</button>
+            <button class="btn" id="stopBtn" onclick="finalizarTaximetro()">Finalizar Taxímetro ■</button>
         </div>
     </div>
 
@@ -180,14 +231,32 @@
         let movimientoTime = 0;
         let tiemposInicio = {};  // Almacena el tiempo de inicio por cada tecla
         let totalTime = 0;
+        const timerDisplay = document.getElementById('timer');
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
         let car = document.getElementById('car');
+        const tiempoParado = document.getElementById('tiempo_parado');
+        const tiempoMovimiento = document.getElementById('tiempo_movimiento');
+        const tiempoTotal = document.getElementById('tiempo_total');
+        const totalPagar = document.getElementById('total_pagar');
 
         function iniciarTaximetro() {
+            // Reiniciar los valores del info-container
+            tiempoParado.textContent = '00:00:00';
+            tiempoMovimiento.textContent = '00:00:00';
+            tiempoTotal.textContent = '00:00:00';
+            totalPagar.textContent = '0.00€';
+
+
             fetch('/iniciar_taximetro', { method: 'POST' });
             startTime = Date.now();
+            timerDisplay.classList.add('running'); //que se inicie la animacion. 
             interval = setInterval(updateTimer, 1000);
             document.addEventListener('keydown', girarCoche);
             document.addEventListener('keyup', resetearCoche);
+
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
         }
 
         function finalizarTaximetro() {
@@ -212,6 +281,17 @@
                 document.getElementById('tiempo_total').textContent = formatTime(totalTime);
                 document.getElementById('total_pagar').textContent = `${data.total_pagar.toFixed(2)}€`;
             });
+
+            // Resaltar el info-container momentáneamente
+            infoContainer.classList.add('highlight');
+            setTimeout(() => infoContainer.classList.remove('highlight'), 1000);
+
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+            /*reiniciar timer*/
+            timerDisplay.classList.remove('running');
+            timerDisplay.textContent = '00:00:00';
+
         }
 
         function updateTimer() {
@@ -246,9 +326,7 @@
 
         function resetearCoche(event) {
             const key = event.key;
-            console.log(`entra`);
             if (key >= '0' && key <= '9' && tiemposInicio[key]) {
-                console.log(`entra2`);
                 const tiempoPresionado = (Date.now() - tiemposInicio[key]) / 1000;  // Tiempo presionado en segundos
                 movimientoTime += tiempoPresionado;  // Acumula el tiempo de movimiento
                 console.log(`Tecla ${key} presionada durante ${tiempoPresionado} segundos`);
