@@ -181,7 +181,7 @@ def mostrar_recorridos():
     if 'usuario' not in session:
         return redirect(url_for('login'))
     recorridos = mongo.db.recorridos.find({'conductor': session['usuario']})
-    return render_template('recorridos.html', recorridos=recorridos)
+    return render_template('recorridos.html', recorridos=recorridos, usuario=session['usuario'])
 
 
 
