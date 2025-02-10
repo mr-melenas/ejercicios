@@ -112,8 +112,9 @@ def index():
 @app.route('/iniciar_taximetro', methods=['POST'])
 def iniciar_taximetro():
     #print("entro en iniciar_taximetro")
-    # Puedes registrar la hora de inicio si es necesario
     session['start_time'] = datetime.now()
+    session['tiempo_movimiento'] = 0  # Reiniciar tiempo de movimiento
+    session['tiempo_parado'] = 0      # Reiniciar tiempo parado
     return jsonify({"status": "Taxímetro iniciado"})
 
 @app.route('/finalizar_taximetro', methods=['POST'])
@@ -123,6 +124,8 @@ def finalizar_taximetro():
     precio_parado= 0.02
     precio_movimiento= 0.05
     tiempo_total = data['tiempo_total']
+    tiempo_movimiento = 0
+    tiempo_parado = 0
     tiempo_movimiento = data['tiempo_movimiento']
     tiempo_parado = max(0, tiempo_total - tiempo_movimiento)  # Evitar valores negativos
     total_pagar = tiempo_parado * precio_parado + tiempo_movimiento * precio_movimiento
@@ -147,6 +150,7 @@ def finalizar_taximetro():
         "tiempo_parado": tiempo_parado,
         "total_pagar": total_pagar
     })
+
 
 # Ruta para guardar un recorrido
 @app.route('/guardar_recorrido', methods=['POST'])

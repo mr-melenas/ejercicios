@@ -242,12 +242,13 @@
 
         function iniciarTaximetro() {
             // Reiniciar los valores del info-container
+            clearInterval(interval);
             tiempoParado.textContent = '00:00:00';
             tiempoMovimiento.textContent = '00:00:00';
             tiempoTotal.textContent = '00:00:00';
             totalPagar.textContent = '0.00€';
 
-
+            movimientoTime = 0;  //  Reiniciar el tiempo de movimiento al iniciar
             fetch('/iniciar_taximetro', { method: 'POST' });
             startTime = Date.now();
             timerDisplay.classList.add('running'); //que se inicie la animacion. 
@@ -276,7 +277,7 @@
             .then(response => response.json())
             .then(data => {
                 document.getElementById('conductor').textContent = data.conductor;
-                document.getElementById('tiempo_parado').textContent = formatTime(totalTime - movimientoTime);
+                document.getElementById('tiempo_parado').textContent = formatTime(totalTime - movimientoTime).padStart(2, '0');
                 document.getElementById('tiempo_movimiento').textContent = formatTime(movimientoTime);
                 document.getElementById('tiempo_total').textContent = formatTime(totalTime);
                 document.getElementById('total_pagar').textContent = `${data.total_pagar.toFixed(2)}€`;
@@ -292,17 +293,24 @@
             timerDisplay.classList.remove('running');
             timerDisplay.textContent = '00:00:00';
 
+            tiempoParado.textContent = '00:00:00';
+            tiempoMovimiento.textContent = '00:00:00';
+            tiempoTotal.textContent = '00:00:00';
+            totalPagar.textContent = '0.00€';
+            console.log(` tiempoMovimiento ${tiempoMovimiento}`);
+
         }
 
         function updateTimer() {
             let elapsedTime = Math.floor((Date.now() - startTime) / 1000);
-            document.getElementById('timer').textContent = formatTime(elapsedTime);
+            timerDisplay.textContent = formatTime(elapsedTime);
+            tiempoTotal.textContent = formatTime(elapsedTime);
         }
 
         function formatTime(seconds) {
             let hours = String(Math.floor(seconds / 3600)).padStart(2, '0');
             let minutes = String(Math.floor((seconds % 3600) / 60)).padStart(2, '0');
-            let secs = String(seconds % 60).padStart(2, '0');
+            let secs = (seconds % 60).toFixed(2).toString().padStart(2, '0');
             return `${hours}:${minutes}:${secs}`;
         }
 
