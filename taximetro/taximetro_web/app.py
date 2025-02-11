@@ -121,10 +121,17 @@ def iniciar_taximetro():
 
 @app.route('/finalizar_taximetro', methods=['POST'])
 def finalizar_taximetro():
-    #print("entro en iniciar_taximetro")
+    if 'usuario' not in session:
+        return jsonify({"error": "Usuario no autenticado"}), 403
+
     data = request.get_json()
-    precio_parado= 0.02
-    precio_movimiento= 0.05
+    usuario = mongo.db.conductores.find_one({'username': session['usuario']})
+    tarifa = mongo.db.tarifas.find_one({'tipo': usuario['tipo']})
+    if not tarifa:
+        return jsonify({"error": "Tarifa no encontrada para el usuario"}), 404
+    
+    precio_parado= tarifa['parado']
+    precio_movimiento= tarifa['movimiento']
     tiempo_total = data['tiempo_total']
     tiempo_movimiento = 0
     tiempo_parado = 0
@@ -142,7 +149,8 @@ def finalizar_taximetro():
         "tiempo_parado": tiempo_parado,
         "tiempo_movimiento": tiempo_movimiento,
         "total_pagar": total_pagar,
-        "fecha_registro": datetime.now()
+        "fecha_registro": datetime.now(),
+        "tarifa": usuario['tipo'] #guardo en bd el tipo de tarifa
     })
 
     return jsonify({
@@ -158,7 +166,7 @@ def finalizar_taximetro():
 def guardar_recorrido():
     if 'usuario' not in session:
         return redirect(url_for('login'))
-
+    print("entro en guardar_recorrido!!!!!!!!!!!!!")
     data = request.form
     nuevo_recorrido = {
         "conductor": data["conductor"],
@@ -185,53 +193,39 @@ def mostrar_recorridos():
     return render_template('recorridos.html', recorridos=recorridos, usuario=session['usuario'])
 
 
-
 #----------------------------------------------------------------------------------------------------------------------------
-# Página tarifas
+# Página de Tarifas
 #----------------------------------------------------------------------------------------------------------------------------
-# @app.route('/tarifas')
-# def tarifas():
-#     if 'usuario' not in session:
-#         return redirect(url_for('login'))
-#     return render_template('tarifas.html')
+@app.route('/api/tarifas', methods=['GET'])
+def obtener_tarifas():
+    tarifas = list(mongo.db.tarifas.find({}, {"_id": 0}))  # Excluir el _id
+    return jsonify(tarifas)
 
-# Ruta para obtener todas las tarifas
-# @app.route("/tarifas", methods=["GET"])
-# def obtener_tarifas():
-#     tarifas = list(mongo.db.tarifas.find({}, {"_id": 0}))  # Excluir el campo _id
-#     return jsonify(tarifas)
 
-# # Ruta para seleccionar una tarifa
-# @app.route("/tarifas/seleccionar", methods=["POST"])
-# def seleccionar_tarifa():
-#     global tarifa_seleccionada
-#     data = request.get_json()
-#     tipo = data.get("tipo")
+@app.route('/tarifas')
+def tarifas():
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+    tarifas = list(mongo.db.tarifas.find({}, {"_id": 0})) #toma el listado de todas las tarifas
+    return render_template('tarifas.html', tarifas=tarifas, usuario=session['usuario'])
 
-#     tarifa = mongo.db.tarifas.find_one({"tipo": tipo}, {"_id": 0})
-#     if not tarifa:
-#         return jsonify({"error": "Tarifa no encontrada"}), 404
+@app.route('/actualizar_tarifa', methods=['POST'])
+def actualizar_tarifa():
+    if 'usuario' not in session:
+        return jsonify({"error": "Usuario no autenticado"}), 403
 
-#     tarifa_seleccionada = tarifa  # Guardar la tarifa seleccionada en la variable global
-#     return jsonify({"mensaje": f"Tarifa '{tipo}' seleccionada correctamente.", "tarifa": tarifa})
+    data = request.get_json()
+    nueva_tarifa = data.get('tipo')
 
-# # Ruta para calcular el costo de un trayecto
-# @app.route("/trayecto", methods=["POST"])
-# def calcular_costo_trayecto():
-#     if not tarifa_seleccionada:
-#         return jsonify({"error": "No se ha seleccionado ninguna tarifa"}), 400
+    resultado = mongo.db.conductores.update_one(
+        {"username": session['usuario']},
+        {"$set": {"tipo": nueva_tarifa}}
+    )
 
-#     data = request.get_json()
-#     tiempo_movimiento = data.get("tiempo_movimiento", 0)
-#     tiempo_parado = data.get("tiempo_parado", 0)
-
-#     costo = (tiempo_movimiento * tarifa_seleccionada["movimiento"]) + (tiempo_parado * tarifa_seleccionada["parado"])
-#     return jsonify({"costo": round(costo, 2), "moneda": tarifa_seleccionada["moneda"]})
-
-# # Ruta para renderizar la página de tarifas
-# @app.route("/tarifas.html", methods=["GET"])
-# def mostrar_tarifas():
-#     return render_template("tarifas.html")
+    if resultado.modified_count > 0:
+        return jsonify({"mensaje": "Tarifa actualizada correctamente"})
+    else:
+        return jsonify({"mensaje": "No se realizó ningún cambio"})
 
 
 #----------------------------------------------------------------------------------------------------------------------------
