@@ -59,7 +59,8 @@ def register():
             'apellido': apellido,
             'email': email,
             'telefono': telefono if telefono else None,
-            'matricula': matricula if matricula else None
+            'matricula': matricula if matricula else None,
+            'tipo': "tarifa_estandar"
         }
 
         # Insertar el nuevo usuario en la colección 'conductores'
@@ -195,42 +196,42 @@ def mostrar_recorridos():
 #     return render_template('tarifas.html')
 
 # Ruta para obtener todas las tarifas
-@app.route("/tarifas", methods=["GET"])
-def obtener_tarifas():
-    tarifas = list(mongo.db.tarifas.find({}, {"_id": 0}))  # Excluir el campo _id
-    return jsonify(tarifas)
+# @app.route("/tarifas", methods=["GET"])
+# def obtener_tarifas():
+#     tarifas = list(mongo.db.tarifas.find({}, {"_id": 0}))  # Excluir el campo _id
+#     return jsonify(tarifas)
 
-# Ruta para seleccionar una tarifa
-@app.route("/tarifas/seleccionar", methods=["POST"])
-def seleccionar_tarifa():
-    global tarifa_seleccionada
-    data = request.get_json()
-    tipo = data.get("tipo")
+# # Ruta para seleccionar una tarifa
+# @app.route("/tarifas/seleccionar", methods=["POST"])
+# def seleccionar_tarifa():
+#     global tarifa_seleccionada
+#     data = request.get_json()
+#     tipo = data.get("tipo")
 
-    tarifa = mongo.db.tarifas.find_one({"tipo": tipo}, {"_id": 0})
-    if not tarifa:
-        return jsonify({"error": "Tarifa no encontrada"}), 404
+#     tarifa = mongo.db.tarifas.find_one({"tipo": tipo}, {"_id": 0})
+#     if not tarifa:
+#         return jsonify({"error": "Tarifa no encontrada"}), 404
 
-    tarifa_seleccionada = tarifa  # Guardar la tarifa seleccionada en la variable global
-    return jsonify({"mensaje": f"Tarifa '{tipo}' seleccionada correctamente.", "tarifa": tarifa})
+#     tarifa_seleccionada = tarifa  # Guardar la tarifa seleccionada en la variable global
+#     return jsonify({"mensaje": f"Tarifa '{tipo}' seleccionada correctamente.", "tarifa": tarifa})
 
-# Ruta para calcular el costo de un trayecto
-@app.route("/trayecto", methods=["POST"])
-def calcular_costo_trayecto():
-    if not tarifa_seleccionada:
-        return jsonify({"error": "No se ha seleccionado ninguna tarifa"}), 400
+# # Ruta para calcular el costo de un trayecto
+# @app.route("/trayecto", methods=["POST"])
+# def calcular_costo_trayecto():
+#     if not tarifa_seleccionada:
+#         return jsonify({"error": "No se ha seleccionado ninguna tarifa"}), 400
 
-    data = request.get_json()
-    tiempo_movimiento = data.get("tiempo_movimiento", 0)
-    tiempo_parado = data.get("tiempo_parado", 0)
+#     data = request.get_json()
+#     tiempo_movimiento = data.get("tiempo_movimiento", 0)
+#     tiempo_parado = data.get("tiempo_parado", 0)
 
-    costo = (tiempo_movimiento * tarifa_seleccionada["movimiento"]) + (tiempo_parado * tarifa_seleccionada["parado"])
-    return jsonify({"costo": round(costo, 2), "moneda": tarifa_seleccionada["moneda"]})
+#     costo = (tiempo_movimiento * tarifa_seleccionada["movimiento"]) + (tiempo_parado * tarifa_seleccionada["parado"])
+#     return jsonify({"costo": round(costo, 2), "moneda": tarifa_seleccionada["moneda"]})
 
-# Ruta para renderizar la página de tarifas
-@app.route("/tarifas.html", methods=["GET"])
-def mostrar_tarifas():
-    return render_template("tarifas.html")
+# # Ruta para renderizar la página de tarifas
+# @app.route("/tarifas.html", methods=["GET"])
+# def mostrar_tarifas():
+#     return render_template("tarifas.html")
 
 
 #----------------------------------------------------------------------------------------------------------------------------
