@@ -1,10 +1,140 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tarifas - Taxímetro</title>
+    <link rel="stylesheet" href="static/css/style.css">
+    <style>
+
+        h1 {
+            text-align: center;
+            color: #4a90e2;
+        }
+
+        a {
+            text-decoration: none;
+            color: #4a90e2;
+        }
+
+        .tarifa-container { 
+            display: flex; 
+            flex-wrap: wrap; 
+            justify-content: center; 
+            gap: 20px; 
+        }
+        .tarifa {
+            background: white;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            width: 200px;
+            text-align: center;
+        }
+        .tarifa input[type="radio"] {
+            margin-top: 10px;
+        }
+        #aceptar-btn {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 20px;
+            background-color: #4a90e2;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+        #aceptar-btn:hover {
+            background-color: #357ab8;
+        }
+
+        
+    </style>
 </head>
 <body>
-    <h1>Tarifas en Construcción 🚧</h1>
-    <a href="/">Volver al Inicio</a>
+    <!-- Menú lateral -->
+    <div class="sidebar">
+        <div class="logo">
+            <img src="static/logo.png" alt="Logo de la Empresa">
+            <h1>Taximetro</h1>
+        </div>
+
+        <!-- Mostrar el nombre del usuario -->
+        <div class="user-info">
+            👋 Bienvenido, {{ usuario }}
+        </div>
+
+        <a href="/">🏠 Home</a>
+        <a href="/recorridos">📋 Recorridos</a>
+        <a href="/tarifas">💰 Tarifas</a>
+        <a href="/logout">🚪 Cerrar Sesión</a>
+    </div>
+    <!-- Área principal -->
+    <div class="container">
+
+        <h1>Seleccionar Tarifa</h1>
+        <div class="tarifa-container" id="tarifas"></div>
+        <button id="aceptar-btn" onclick="guardarTarifa()">Aceptar</button>
+
+
+        
+    </div>
+
+    <script>
+        let tarifaSeleccionada = null;
+
+        // Obtener tarifas desde el servidor
+        fetch('/tarifas')
+            .then(response => response.json())
+            .then(data => mostrarTarifas(data));
+
+        // Mostrar tarifas en la página
+        function mostrarTarifas(tarifas) {
+            const container = document.getElementById('tarifas');
+            container.innerHTML = '';
+
+            tarifas.forEach(tarifa => {
+                container.innerHTML += `
+                    <div class="tarifa">
+                        <h3>${tarifa.tipo}</h3>
+                        <p>Movimiento: ${tarifa.movimiento} ${tarifa.moneda}</p>
+                        <p>Parado: ${tarifa.parado} ${tarifa.moneda}</p>
+                        <input type="radio" name="tarifa" value="${tarifa.tipo}" onclick="seleccionarTarifa('${tarifa.tipo}')">
+                    </div>
+                `;
+            });
+        }
+
+        // Seleccionar una tarifa
+        function seleccionarTarifa(tipo) {
+            tarifaSeleccionada = tipo;
+        }
+
+        // Guardar la tarifa seleccionada
+        function guardarTarifa() {
+            if (!tarifaSeleccionada) {
+                alert('Por favor, selecciona una tarifa.');
+                return;
+            }
+
+            fetch('/tarifas/seleccionar', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tipo: tarifaSeleccionada })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.mensaje) {
+                    alert(data.mensaje);
+                } else {
+                    alert('Error al guardar la tarifa.');
+                }
+            });
+        }
+    </script>
+
 </body>
 </html>
