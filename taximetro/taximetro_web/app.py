@@ -80,11 +80,11 @@ def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-
+        #busca al usuario en la bd 
         usuario = mongo.db.conductores.find_one({'username': username})
-
-        if usuario and bcrypt.check_password_hash(usuario['password'], password):
-            session['usuario'] = username
+        
+        if usuario and bcrypt.check_password_hash(usuario['password'], password): #compara la contraseña ingresada con el hash almacenado para verificar si coinciden.
+            session['usuario'] = username #guardamos temporalemnte el username 
             flash('¡Inicio de sesión exitoso!', 'success')
             return redirect(url_for('index'))
         else:
@@ -96,7 +96,7 @@ def login():
 # Cerrar sesión
 @app.route('/logout')
 def logout():
-    session.pop('usuario', None)
+    session.pop('usuario', None) #Elimina la 'usuario' de la sesión.
     flash('Sesión cerrada.', 'info')
     return redirect(url_for('login'))
 
@@ -117,14 +117,15 @@ def iniciar_taximetro():
     session['start_time'] = datetime.now()
     session['tiempo_movimiento'] = 0  # Reiniciar tiempo de movimiento
     session['tiempo_parado'] = 0      # Reiniciar tiempo parado
-    return jsonify({"status": "Taxímetro iniciado"})
+    return jsonify({"status": "Taxímetro iniciado"}) #devuelve un JSON con los datos enviados 
 
 @app.route('/finalizar_taximetro', methods=['POST'])
 def finalizar_taximetro():
     if 'usuario' not in session:
         return jsonify({"error": "Usuario no autenticado"}), 403
 
-    data = request.get_json()
+    data = request.get_json()#obtiene los datos enviados desde front, en este caso javascript con el fetch
+
     usuario = mongo.db.conductores.find_one({'username': session['usuario']})
     tarifa = mongo.db.tarifas.find_one({'tipo': usuario['tipo']})
     if not tarifa:
@@ -133,8 +134,8 @@ def finalizar_taximetro():
     precio_parado= tarifa['parado']
     precio_movimiento= tarifa['movimiento']
     tiempo_total = data['tiempo_total']
-    tiempo_movimiento = 0
-    tiempo_parado = 0
+    tiempo_movimiento = 0 #reinicio por si hubo uno anterior
+    tiempo_parado = 0 #reinicio por si hubo uno anterior
     tiempo_movimiento = data['tiempo_movimiento']
     tiempo_parado = max(0, tiempo_total - tiempo_movimiento)  # Evitar valores negativos
     total_pagar = tiempo_parado * precio_parado + tiempo_movimiento * precio_movimiento
@@ -142,9 +143,10 @@ def finalizar_taximetro():
     print(f"tiempo_movimiento {tiempo_movimiento}")
     print(f"tiempo_total {tiempo_total} ")
     print(f"total_pagar {total_pagar:.2f}€")
+
     # Guardar en MongoDB
     mongo.db.recorridos.insert_one({
-        "conductor": session.get('usuario'),
+        "conductor": session.get('usuario'), #eslo mismo que session['usuario'] pero usarlo de este modo es mas seguro xq si no existe devuelve none
         "tiempo_total": tiempo_total,
         "tiempo_parado": tiempo_parado,
         "tiempo_movimiento": tiempo_movimiento,
