@@ -108,11 +108,13 @@
 
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
-                    {% for category, message in messages %}
-                    <div class="alert {{ category }}">
-                        {{ message }}
+                    <div id="alert-container">
+                        {% for category, message in messages %}
+                        <div class="alert {{ category }}">
+                            {{ message }}
+                        </div>
+                        {% endfor %}
                     </div>
-                    {% endfor %}
                 {% endif %}
             {% endwith %}
 
@@ -123,6 +125,31 @@
             </form>
             <p>¿No tienes cuenta? <a href="/register">Regístrate aquí</a></p>
         </div>
+        <script>
+            window.addEventListener('DOMContentLoaded', () => {
+                const alertContainer = document.getElementById('alert-container');
 
+                // Eliminar cualquier mensaje previo al cargar la página
+                if (alertContainer) {
+                    const alerts = alertContainer.querySelectorAll('.alert');
+                    if (alerts.length > 1) {
+                        alerts.forEach((alert, index) => {
+                            if (index !== alerts.length - 1) {
+                                alert.remove();
+                            }
+                        });
+                    }
+
+                    // Ocultar el mensaje restante después de 3 segundos
+                    setTimeout(() => {
+                        const alert = alertContainer.querySelector('.alert');
+                        if (alert) {
+                            alert.style.opacity = '0';
+                            setTimeout(() => alert.remove(), 1000);
+                        }
+                    }, 3000);
+                }
+            });
+        </script>
     </body>
 </html>
