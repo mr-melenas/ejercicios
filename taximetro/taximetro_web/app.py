@@ -60,7 +60,7 @@ def register():
             'email': email,
             'telefono': telefono if telefono else None,
             'matricula': matricula if matricula else None,
-            'tipo': "tarifa_estandar"
+            'tipo': "tarifa_estandar" #a todos los usuarios por defect le asignamos esta tarifa 
         }
 
         # Insertar el nuevo usuario en la colección 'conductores'
@@ -113,7 +113,6 @@ def index():
 
 @app.route('/iniciar_taximetro', methods=['POST'])
 def iniciar_taximetro():
-    #print("entro en iniciar_taximetro")
     session['start_time'] = datetime.now()
     session['tiempo_movimiento'] = 0  # Reiniciar tiempo de movimiento
     session['tiempo_parado'] = 0      # Reiniciar tiempo parado
@@ -168,8 +167,7 @@ def finalizar_taximetro():
 def guardar_recorrido():
     if 'usuario' not in session:
         return redirect(url_for('login'))
-    print("entro en guardar_recorrido!!!!!!!!!!!!!")
-    data = request.form
+    data = request.form #obtiene los datos enviados por el form en el html
     nuevo_recorrido = {
         "conductor": data["conductor"],
         "tiempo_total": int(data["tiempo_total"]),
@@ -200,7 +198,7 @@ def mostrar_recorridos():
 #----------------------------------------------------------------------------------------------------------------------------
 @app.route('/api/tarifas', methods=['GET'])
 def obtener_tarifas():
-    tarifas = list(mongo.db.tarifas.find({}, {"_id": 0}))  # Excluir el _id
+    tarifas = list(mongo.db.tarifas.find({}, {"_id": 0}))  # Busca todas las tarifas en la colección y Excluiye el _id
     return jsonify(tarifas)
 
 
@@ -216,8 +214,8 @@ def actualizar_tarifa():
     if 'usuario' not in session:
         return jsonify({"error": "Usuario no autenticado"}), 403
 
-    data = request.get_json()
-    nueva_tarifa = data.get('tipo')
+    data = request.get_json()#obtiene los datos enviados por el form en el html
+    nueva_tarifa = data.get('tipo') # del anterior  obtiene la tarifa seleccionada.
 
     resultado = mongo.db.conductores.update_one(
         {"username": session['usuario']},
