@@ -8,7 +8,7 @@ app.secret_key = 'secreto_super_seguro'  # Clave para manejar sesiones
 
 
 # Conectar a MongoDB Atlas
-app.config["MONGO_URI"] = "mongodb+srv://mbeltranestudio:tAucnxsq2Qc822DS@clusteradan.amk0r.mongodb.net/"
+app.config["MONGO_URI"] = "mongodb+srv://user:pass@serv.mongodb.net/"
 mongo = PyMongo(app)
 bcrypt = Bcrypt(app)
 
